@@ -107,7 +107,7 @@ variable "public_ip_sku_tier" {
 }
 
 variable "public_ip_zones" {
-  description = "List of zones for the Public IP (e.g., ["1","2","3"]). Null => no zones."
+  description = "List of zones for the Public IP (e.g., [\"1\",\"2\",\"3\"]). Null => no zones."
   type        = list(string)
   default     = null
 }

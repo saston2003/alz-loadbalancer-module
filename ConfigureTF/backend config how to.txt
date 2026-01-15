@@ -1,0 +1,16 @@
+The backend.config file is used to override backend configuration values when initializing Terraform. Here's how it works:
+
+Where It's Used
+The backend.config file is used with the terraform init command via the -backend-config flag:
+
+terraform init -backend-config="backend.config"
+
+
+What It Does
+In your case, the backend.config file contains:
+
+key = "storageacctimes3.tfstate"
+
+This will override the key value defined in the backend block of your Provider-and-backend.tf file (which currently has key = "devbox.tfstate").
+
+When you run terraform init -backend-config="backend.config", the Terraform state file will be stored as storageacctimes3.tfstate instead of devbox.tfstate in your Azure Storage backend.

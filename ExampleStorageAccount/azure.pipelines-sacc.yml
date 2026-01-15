@@ -1,0 +1,94 @@
+trigger: none
+pr: none
+
+pool: "Mare Nectaris" 
+
+variables: 
+  - group: azdo-live-vars
+
+parameters:
+- name: action
+  displayName: 'Select Action'
+  type: string
+  default: 'plan'
+  values:
+  - plan
+  - apply
+  - destroy
+
+stages:
+- stage: Plan
+  displayName: 'Terraform Init and Plan'
+  condition: or(eq(variables['Build.Reason'], 'IndividualCI'), eq('${{ parameters.action }}', 'plan'))
+  jobs:             
+  - job: terraform
+    container: ukhydrographicoffice/terraform-azure:latest
+    steps:
+      - bash: | 
+          terraform init -backend-config="key=$(projectAlias).tfstate"
+          terraform validate
+          terraform plan -input=false 
+        displayName: Terraform Plan
+        workingDirectory: '$(System.DefaultWorkingDirectory)'
+        env:
+          ARM_TENANT_ID: $(UKHO-TENANT-ID) 
+          ARM_CLIENT_ID: $(azurecreatorId)
+          ARM_CLIENT_SECRET: $(azurecreatorsecret)
+          ARM_SUBSCRIPTION_ID: $(ukho-alz-state-subscription-id)
+          TF_VAR_projectAlias: $(projectAlias)
+          TF_VAR_loc_admin: $(loc-admin)
+          TF_VAR_nic_private_ip_address: $(nic_private_ip_address)
+          TF_VAR_prefix: $(prefix)
+          TF_VAR_network_prefix: $(network_prefix)
+          TF_VAR_location: $(location)
+          TF_VAR_server_number: $(server_number)
+
+- stage: Apply
+  displayName: 'Terraform Apply'
+  condition: or(succeeded('Plan'), eq('${{ parameters.action }}', 'apply'))
+  dependsOn: Plan
+  jobs:
+  - job: terraform
+    container: ukhydrographicoffice/terraform-azure:latest
+    steps:
+      - bash: |
+          terraform init -backend-config="key=$(projectAlias).tfstate"
+          terraform apply -auto-approve -input=false
+        displayName: Terraform Apply
+        workingDirectory: '$(System.DefaultWorkingDirectory)'
+        env:
+          ARM_TENANT_ID: $(UKHO-TENANT-ID) 
+          ARM_CLIENT_ID: $(azurecreatorId)
+          ARM_CLIENT_SECRET: $(azurecreatorsecret)
+          TF_VAR_projectAlias: $(projectAlias)
+          TF_VAR_loc_admin: $(loc-admin)
+          TF_VAR_nic_private_ip_address: $(nic_private_ip_address)
+          TF_VAR_prefix: $(prefix)
+          TF_VAR_network_prefix: $(network_prefix)
+          TF_VAR_location: $(location)
+          TF_VAR_server_number: $(server_number)
+
+- stage: Destroy
+  displayName: 'Terraform Destroy'
+  condition: eq('${{ parameters.action }}', 'destroy')
+  jobs:             
+  - job: terraform
+    container: ukhydrographicoffice/terraform-azure:latest
+    steps:
+      - bash: | 
+          terraform init -backend-config="key=$(projectAlias).tfstate"
+          terraform destroy -auto-approve -input=false 
+        displayName: Terraform Destroy
+        workingDirectory: '$(System.DefaultWorkingDirectory)'
+        env:
+          ARM_TENANT_ID: $(UKHO-TENANT-ID) 
+          ARM_CLIENT_ID: $(azurecreatorId)
+          ARM_CLIENT_SECRET: $(azurecreatorsecret)
+          TF_VAR_projectAlias: $(projectAlias)
+          TF_VAR_loc_admin: $(loc-admin)
+          TF_VAR_nic_private_ip_address: $(nic_private_ip_address)
+          TF_VAR_prefix: $(prefix)
+          TF_VAR_network_prefix: $(network_prefix)
+          TF_VAR_location: $(location)
+          TF_VAR_server_number: $(server_number)
+

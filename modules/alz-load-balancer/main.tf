@@ -35,24 +35,12 @@ resource "azurerm_lb" "this" {
     name = local.fe_config_name
 
     # internal
-    dynamic "subnet_id" {
-      for_each = local.is_internal ? [1] : []
-      content  = var.subnet_id
-    }
-    dynamic "private_ip_address_allocation" {
-      for_each = local.is_internal ? [1] : []
-      content  = var.frontend_private_ip_allocation
-    }
-    dynamic "private_ip_address" {
-      for_each = local.is_internal && var.frontend_private_ip_allocation == "Static" && var.frontend_private_ip_address != null ? [1] : []
-      content  = var.frontend_private_ip_address
-    }
+    subnet_id                     = local.is_internal ? var.subnet_id : null
+    private_ip_address_allocation = local.is_internal ? var.frontend_private_ip_allocation : null
+    private_ip_address            = local.is_internal && var.frontend_private_ip_allocation == "Static" && var.frontend_private_ip_address != null ? var.frontend_private_ip_address : null
 
     # public
-    dynamic "public_ip_address_id" {
-      for_each = local.is_public ? [1] : []
-      content  = coalesce(var.public_ip_id, try(azurerm_public_ip.this[0].id, null))
-    }
+    public_ip_address_id = local.is_public ? coalesce(var.public_ip_id, try(azurerm_public_ip.this[0].id, null)) : null
   }
 }
 
