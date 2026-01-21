@@ -74,7 +74,7 @@ resource "azurerm_lb_rule" "this" {
   backend_address_pool_ids       = [azurerm_lb_backend_address_pool.this.id]
   probe_id                       = try(azurerm_lb_probe.this[each.value.probe_name].id, null)
   idle_timeout_in_minutes        = try(each.value.idle_timeout_in_minutes, 4)
-  floating_ip_enabled            = try(each.value.enable_floating_ip, false)
+  enable_floating_ip             = try(each.value.enable_floating_ip, false)
   disable_outbound_snat          = try(each.value.disable_outbound_snat, false)
 }
 

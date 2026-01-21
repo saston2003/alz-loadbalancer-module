@@ -13,7 +13,7 @@ variable "location" {
 variable "storage_account_name" {
   description = "The name of the storage account (must be globally unique)"
   type        = string
-  default     = "svjaz400sacc2000ent2"
+  default     = "sdsvnetstor2000"
 }
 
 variable "account_tier" {
