@@ -1,0 +1,12 @@
+I want a new folder
+with a terraform configuration for
+2 virtual machines
+the virtual machines should be joined to a network I already have
+the network is in resource group
+m-spokeconfig-rg
+and is called
+SDSvNetTest-vnet
+the vms should start with the name Skynet
+and have 01 and 02
+they should not be accessible publicly
+they should comply with all known azure landing zone policies

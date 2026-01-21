@@ -1,0 +1,17 @@
+# Admin password for the VMs (required)
+admin_password = "YourSecurePassword123!"
+
+# Optional: Customize these values
+# resource_group_name = "Skynet-VMs-RG"
+# location           = "North Europe"
+# vm_size            = "Standard_D2s_v3"
+# admin_username     = "azureadmin"
+# os_disk_type       = "Premium_LRS"
+# data_disk_type     = "Premium_LRS"
+# data_disk_size_gb  = 128
+
+# tags = {
+#   Environment = "Production"
+#   ManagedBy   = "Terraform"
+#   Purpose     = "Skynet VMs"
+# }
