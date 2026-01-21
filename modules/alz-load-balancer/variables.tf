@@ -195,7 +195,7 @@ variable "allocated_outbound_ports" {
 variable "enable_diagnostics" {
   description = "Enable diagnostic settings."
   type        = bool
-  default     = true
+  default     = false
 }
 
 variable "log_analytics_workspace_id" {
