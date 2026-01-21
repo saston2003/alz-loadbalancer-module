@@ -1,6 +1,21 @@
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 3.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+}
+
 
 module "internal_lb" {
-  source              = "../../modules/alz-load-balancer"
+  source              = "../modules/alz-load-balancer"
   name                = var.lb_name
   location            = data.azurerm_resource_group.app_rg.location
   resource_group_name = data.azurerm_resource_group.app_rg.name
