@@ -25,6 +25,12 @@ variable "frontend_private_ip_address" {
   default     = "10.20.3.10"
 }
 
+variable "backend_pool_name" {
+  description = "Name for the backend address pool"
+  type        = string
+  default     = "beap"
+}
+
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)

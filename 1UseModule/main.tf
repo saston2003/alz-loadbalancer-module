@@ -25,6 +25,8 @@ module "internal_lb" {
 
   frontend_private_ip_allocation = var.frontend_private_ip_allocation
   frontend_private_ip_address    = var.frontend_private_ip_address
+  
+  backend_pool_name = var.backend_pool_name
 
   probes = [
     { name = "tcp-443", protocol = "Tcp", port = 443, interval = 5, unhealthy_threshold = 2 }
