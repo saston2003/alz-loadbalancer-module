@@ -4,15 +4,34 @@
 # This file shows how to associate existing VM NICs with the load balancer
 # backend pool after the load balancer has been deployed.
 #
-# Add this to your Terraform configuration AFTER deploying the load balancer.
+# IMPORTANT: Add these resources to your EXISTING Terraform configuration
+# (the same configuration where you deployed the load balancer).
+# This is NOT a separate root module - just add to your main.tf or create
+# a new file like "backend-vms.tf" in the same directory.
 # ============================================================================
 
 # ----------------------------------------------------------------------------
 # OPTION A: Associate Existing VM NICs with Backend Pool
 # ----------------------------------------------------------------------------
 # Use this when you already have VMs deployed and want to add them to the LB
+#
+# HOW IT WORKS:
+# - The association resource uses the FULL Azure Resource ID of the NIC
+# - Azure Resource IDs work across resource groups automatically
+# - The NIC can be in a DIFFERENT resource group than the load balancer
+# - Azure handles the cross-RG association at the control plane level
+# - You just need read access to the NIC and write access to the LB
+#
+# HOW TO USE:
+# 1. Copy the resources below into your existing Terraform configuration
+#    (e.g., add to main.tf or create backend-vms.tf in same directory)
+# 2. Update the NIC resource IDs and IP configuration names
+# 3. Run "terraform plan" in your existing directory
+# 4. Run "terraform apply" to add the associations
 
 # Example: Add VM1's NIC to the backend pool
+# Note: The NIC is in "Skynet-VMs-RG" but the LB is in "rg-sdstest-lb-prod"
+# This works because we're using the FULL resource ID - Azure handles the cross-RG reference
 resource "azurerm_network_interface_backend_address_pool_association" "vm1" {
   network_interface_id    = "/subscriptions/6e05c1d3-15e2-4383-a0dc-2d5a20e44289/resourceGroups/Skynet-VMs-RG/providers/Microsoft.Network/networkInterfaces/Skynet01-nic"
   ip_configuration_name   = "internal"  # Must match the IP config name on the NIC
@@ -98,17 +117,42 @@ resource "azurerm_windows_virtual_machine" "web_vm1" {
 # OPTION C: Using Data Sources to Reference Existing Resources
 # ----------------------------------------------------------------------------
 # Use this when VMs are managed elsewhere but you want to add them to your LB
+# This is the RECOMMENDED approach for cross-RG VMs as it validates they exist
 
-# Look up existing VM NIC
+# Look up existing VM NIC (can be in ANY resource group)
 data "azurerm_network_interface" "existing_vm_nic" {
   name                = "existing-vm-nic"
-  resource_group_name = "rg-vms"
+  resource_group_name = "rg-vms"  # Can be different from LB resource group
 }
 
 # Add the existing NIC to the backend pool
+# This works cross-RG because data source provides the full resource ID
 resource "azurerm_network_interface_backend_address_pool_association" "existing_vm" {
-  network_interface_id    = data.azurerm_network_interface.existing_vm_nic.id
+  network_interface_id    = data.azurerm_network_interface.existing_vm_nic.id  # Full Azure resource ID
   ip_configuration_name   = "ipconfig1"  # Check the actual name in Azure Portal
+  backend_address_pool_id = module.internal_lb.backend_address_pool_id
+}
+
+# Example: Multiple VMs in different resource group
+data "azurerm_network_interface" "skynet01" {
+  name                = "Skynet01-nic"
+  resource_group_name = "Skynet-VMs-RG"  # Different RG than load balancer
+}
+
+data "azurerm_network_interface" "skynet02" {
+  name                = "Skynet02-nic"
+  resource_group_name = "Skynet-VMs-RG"
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "skynet01" {
+  network_interface_id    = data.azurerm_network_interface.skynet01.id
+  ip_configuration_name   = "internal"
+  backend_address_pool_id = module.internal_lb.backend_address_pool_id
+}
+
+resource "azurerm_network_interface_backend_address_pool_association" "skynet02" {
+  network_interface_id    = data.azurerm_network_interface.skynet02.id
+  ip_configuration_name   = "internal"
   backend_address_pool_id = module.internal_lb.backend_address_pool_id
 }
 
@@ -142,19 +186,29 @@ resource "azurerm_network_interface_backend_address_pool_association" "vms" {
 # HOW TO USE THIS FILE
 # ============================================================================
 #
+# YOU DON'T NEED A NEW ROOT MODULE! Add to your existing configuration:
+#
 # 1. Choose the option that fits your scenario:
 #    - Option A: You have VMs, know their NIC resource IDs
 #    - Option B: You're creating new VMs with Terraform
 #    - Option C: VMs exist but managed elsewhere
 #    - Option D: Many VMs with consistent naming
 #
-# 2. Copy the relevant section to your main.tf or a separate file like backend-vms.tf
+# 2. In your EXISTING Terraform directory (where you deployed the LB):
+#    - Either add the code to your existing main.tf, OR
+#    - Create a new file like "backend-vms.tf" (Terraform loads all .tf files)
 #
 # 3. Update the resource IDs, names, and IP configuration names to match your VMs
 #
-# 4. Run terraform plan to verify the associations
+# 4. Run "terraform plan" in the SAME directory - you'll see it wants to add associations
 #
-# 5. Run terraform apply to add VMs to the backend pool
+# 5. Run "terraform apply" - this updates your existing deployment
+#
+# Example workflow:
+#   cd C:\repo\your-lb-deployment    # Your existing LB deployment folder
+#   # Add association resources to main.tf or create backend-vms.tf
+#   terraform plan                    # Shows: Plan: 2 to add (the associations)
+#   terraform apply                   # Adds NICs to backend pool
 #
 # ============================================================================
 # FINDING YOUR NIC INFORMATION
