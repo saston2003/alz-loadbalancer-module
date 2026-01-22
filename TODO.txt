@@ -1,0 +1,21 @@
+Need to look at my copilot on this reference
+
+
+Absolutely—you can use your load balancer module with virtual machines that already exist.
+At a high level you’ll:
+
+Deploy the LB (using your module) and get the backend pool ID as an output.
+Associate existing NICs (or specific NIC IP configurations) to the backend pool with a small, separate Terraform resource.
+Make sure NSGs/UDRs allow health probes and traffic; plan for zones/SKU compatibility and outbound behavior.
+
+Below are the practical patterns and gotchas to make it smooth in an Azure Landing Zone (ALZ) environment.
+
+LOOK at these eg. vmss
+
+Other uses of a LB which people may want?
+
+VM first or vm second scenario  - mine currently is second ie. 2vm's already created
+
+There is a way of getting the vm password passed in as variable
+
+Azure Verified?
