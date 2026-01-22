@@ -1,0 +1,176 @@
+# ============================================================================
+# VARIABLES - Fully Configurable via terraform.tfvars
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# REQUIRED VARIABLES
+# ----------------------------------------------------------------------------
+
+variable "rg_name" {
+  description = "Resource group name where the load balancer will be deployed"
+  type        = string
+}
+
+variable "vnet_rg_name" {
+  description = "Resource group name where the VNet exists"
+  type        = string
+}
+
+variable "vnet_name" {
+  description = "Name of the existing virtual network"
+  type        = string
+}
+
+variable "subnet_name" {
+  description = "Name of the existing subnet within the VNet"
+  type        = string
+}
+
+variable "location" {
+  description = "Azure region for the load balancer deployment"
+  type        = string
+}
+
+# ----------------------------------------------------------------------------
+# LOAD BALANCER CONFIGURATION
+# ----------------------------------------------------------------------------
+
+variable "lb_name" {
+  description = "Name of the load balancer"
+  type        = string
+  default     = "app-ilb-prod"
+}
+
+variable "lb_type" {
+  description = "Type of load balancer: internal or public"
+  type        = string
+  default     = "internal"
+  validation {
+    condition     = contains(["internal", "public"], var.lb_type)
+    error_message = "lb_type must be 'internal' or 'public'."
+  }
+}
+
+# ----------------------------------------------------------------------------
+# FRONTEND IP CONFIGURATION
+# ----------------------------------------------------------------------------
+
+variable "frontend_private_ip_allocation" {
+  description = "Private IP allocation method for the load balancer frontend"
+  type        = string
+  default     = "Static"
+  validation {
+    condition     = contains(["Static", "Dynamic"], var.frontend_private_ip_allocation)
+    error_message = "frontend_private_ip_allocation must be Static or Dynamic."
+  }
+}
+
+variable "frontend_private_ip_address" {
+  description = "Static private IP address for the load balancer frontend"
+  type        = string
+  default     = null
+}
+
+# ----------------------------------------------------------------------------
+# BACKEND POOL
+# ----------------------------------------------------------------------------
+
+variable "backend_pool_name" {
+  description = "Name for the backend address pool"
+  type        = string
+  default     = "backend-pool"
+}
+
+# ----------------------------------------------------------------------------
+# HEALTH PROBES
+# ----------------------------------------------------------------------------
+
+variable "probes" {
+  description = "List of health probes to create"
+  type = list(object({
+    name                = string
+    protocol            = string
+    port                = number
+    request_path        = optional(string)
+    interval            = optional(number)
+    unhealthy_threshold = optional(number)
+  }))
+  default = []
+}
+
+# ----------------------------------------------------------------------------
+# LOAD BALANCING RULES
+# ----------------------------------------------------------------------------
+
+variable "lb_rules" {
+  description = "List of load balancing rules"
+  type = list(object({
+    name                    = string
+    protocol                = string
+    frontend_port           = number
+    backend_port            = number
+    probe_name              = optional(string)
+    idle_timeout_in_minutes = optional(number)
+    enable_floating_ip      = optional(bool)
+    disable_outbound_snat   = optional(bool)
+  }))
+  default = []
+}
+
+# ----------------------------------------------------------------------------
+# OUTBOUND CONNECTIVITY
+# ----------------------------------------------------------------------------
+
+variable "enable_outbound_rule" {
+  description = "Enable outbound rule for SNAT"
+  type        = bool
+  default     = false
+}
+
+variable "outbound_protocol" {
+  description = "Outbound rule protocol if enabled"
+  type        = string
+  default     = "Tcp"
+  validation {
+    condition     = contains(["Tcp", "Udp", "All"], var.outbound_protocol)
+    error_message = "outbound_protocol must be Tcp, Udp, or All."
+  }
+}
+
+variable "allocated_outbound_ports" {
+  description = "SNAT ports per VM (for outbound rule)"
+  type        = number
+  default     = 1024
+}
+
+# ----------------------------------------------------------------------------
+# DIAGNOSTICS & MONITORING
+# ----------------------------------------------------------------------------
+
+variable "enable_diagnostics" {
+  description = "Enable diagnostic settings"
+  type        = bool
+  default     = false
+}
+
+variable "log_analytics_workspace_id" {
+  description = "Log Analytics Workspace ID (required if diagnostics enabled)"
+  type        = string
+  default     = null
+}
+
+variable "diagnostic_categories" {
+  description = "Override diagnostic categories; null enables all available"
+  type        = list(string)
+  default     = null
+}
+
+# ----------------------------------------------------------------------------
+# RESOURCE TAGS
+# ----------------------------------------------------------------------------
+
+variable "tags" {
+  description = "Tags to apply to all resources"
+  type        = map(string)
+  default     = {}
+}

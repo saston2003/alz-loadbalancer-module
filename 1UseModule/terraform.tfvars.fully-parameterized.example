@@ -1,0 +1,138 @@
+# ============================================================================
+# TERRAFORM TFVARS - Everything Configurable via Variables
+# ============================================================================
+# This example shows how to configure the load balancer entirely through
+# terraform.tfvars without any hardcoded values in main.tf
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# REQUIRED VARIABLES
+# ----------------------------------------------------------------------------
+
+rg_name      = "rg-lb-prod"
+vnet_rg_name = "rg-network-prod"
+vnet_name    = "vnet-spoke-prod"
+subnet_name  = "snet-app"
+location     = "uksouth"
+
+# ----------------------------------------------------------------------------
+# LOAD BALANCER CONFIGURATION
+# ----------------------------------------------------------------------------
+
+lb_name = "app-ilb-prod"
+lb_type = "internal"  # Options: "internal" or "public"
+
+# ----------------------------------------------------------------------------
+# FRONTEND IP CONFIGURATION
+# ----------------------------------------------------------------------------
+
+frontend_private_ip_allocation = "Static"
+frontend_private_ip_address    = "10.20.3.10"
+
+# ----------------------------------------------------------------------------
+# BACKEND POOL
+# ----------------------------------------------------------------------------
+
+backend_pool_name = "backend-pool"
+
+# ----------------------------------------------------------------------------
+# HEALTH PROBES
+# ----------------------------------------------------------------------------
+
+probes = [
+  {
+    name                = "tcp-443"
+    protocol            = "Tcp"
+    port                = 443
+    interval            = 5
+    unhealthy_threshold = 2
+  }
+]
+
+# ----------------------------------------------------------------------------
+# LOAD BALANCING RULES
+# ----------------------------------------------------------------------------
+
+lb_rules = [
+  {
+    name                  = "https-443"
+    protocol              = "Tcp"
+    frontend_port         = 443
+    backend_port          = 443
+    probe_name            = "tcp-443"
+    disable_outbound_snat = true
+  }
+]
+
+# ----------------------------------------------------------------------------
+# OUTBOUND CONNECTIVITY (ALZ: Use NAT Gateway instead)
+# ----------------------------------------------------------------------------
+
+enable_outbound_rule     = false
+outbound_protocol        = "Tcp"
+allocated_outbound_ports = 1024
+
+# ----------------------------------------------------------------------------
+# DIAGNOSTICS & MONITORING
+# ----------------------------------------------------------------------------
+
+enable_diagnostics = false
+# Uncomment and provide workspace ID for production:
+# log_analytics_workspace_id = "/subscriptions/xxx/resourceGroups/rg-platform/providers/Microsoft.OperationalInsights/workspaces/law-platform"
+diagnostic_categories = null
+
+# ----------------------------------------------------------------------------
+# RESOURCE TAGS
+# ----------------------------------------------------------------------------
+
+tags = {
+  owner      = "your-name"
+  env        = "prod"
+  costCenter = "IT-DEPT"
+  service    = "app-name"
+  managedBy  = "terraform"
+}
+
+# ============================================================================
+# EXAMPLE: MULTIPLE PROBES AND RULES
+# ============================================================================
+#
+# probes = [
+#   {
+#     name                = "http-80"
+#     protocol            = "Http"
+#     port                = 80
+#     request_path        = "/health"
+#     interval            = 10
+#     unhealthy_threshold = 2
+#   },
+#   {
+#     name                = "https-443"
+#     protocol            = "Https"
+#     port                = 443
+#     request_path        = "/health"
+#     interval            = 10
+#     unhealthy_threshold = 2
+#   }
+# ]
+#
+# lb_rules = [
+#   {
+#     name                  = "http-80"
+#     protocol              = "Tcp"
+#     frontend_port         = 80
+#     backend_port          = 80
+#     probe_name            = "http-80"
+#     disable_outbound_snat = true
+#   },
+#   {
+#     name                  = "https-443"
+#     protocol              = "Tcp"
+#     frontend_port         = 443
+#     backend_port          = 443
+#     probe_name            = "https-443"
+#     disable_outbound_snat = true
+#   }
+# ]
+#
+# ============================================================================
