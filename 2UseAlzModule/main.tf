@@ -88,22 +88,22 @@ module "internal_lb" {
 
 output "load_balancer_id" {
   description = "Resource ID of the load balancer"
-  value       = module.internal_lb.id
-}
-
-output "load_balancer_name" {
-  description = "Name of the load balancer"
-  value       = module.internal_lb.name
+  value       = module.internal_lb.lb_id
 }
 
 output "frontend_ip_address" {
   description = "Private IP address of the load balancer frontend"
-  value       = module.internal_lb.frontend_private_ip_address
+  value       = module.internal_lb.private_frontend_ip
 }
 
 output "backend_pool_id" {
   description = "Backend address pool ID (use this to attach VMs)"
   value       = module.internal_lb.backend_address_pool_id
+}
+
+output "frontend_ip_configuration_name" {
+  description = "Frontend IP configuration name"
+  value       = module.internal_lb.lb_frontend_ip_configuration_name
 }
 
 output "subnet_id" {
