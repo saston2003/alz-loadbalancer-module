@@ -1,0 +1,566 @@
+# ============================================================================
+# TERRAFORM TFVARS EXAMPLE - Azure Load Balancer Module
+# ============================================================================
+# This file shows all available configuration options for the load balancer.
+# Copy this file to 'terraform.tfvars' and customize the values for your deployment.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# REQUIRED VARIABLES
+# ----------------------------------------------------------------------------
+
+# Resource group where the load balancer will be deployed
+rg_name = "rg-lb-prod"
+
+# Resource group where the VNet exists (may be different from lb resource group)
+vnet_rg_name = "rg-network-prod"
+
+# Name of the existing virtual network
+vnet_name = "vnet-spoke-prod"
+
+# Name of the existing subnet within the VNet
+subnet_name = "snet-app"
+
+# Azure region for the load balancer deployment
+# Examples: "uksouth", "ukwest", "northeurope", "westeurope"
+location = "uksouth"
+
+# ----------------------------------------------------------------------------
+# LOAD BALANCER CONFIGURATION
+# ----------------------------------------------------------------------------
+
+# Name of the load balancer
+# This will be used as the base name for related resources
+lb_name = "app-ilb-prod"
+
+# Type of load balancer: "internal" or "public"
+# internal = Private IP in your VNet (most common for ALZ)
+# public   = Public-facing with Public IP
+# type = "internal"
+
+# Deployment scope hint for documentation/logic
+# Options: "hub", "spoke", "sandbox"
+# deployment_scope = "spoke"
+
+# ----------------------------------------------------------------------------
+# FRONTEND IP CONFIGURATION (Internal LB)
+# ----------------------------------------------------------------------------
+
+# Private IP allocation method for internal load balancer
+# Options: "Static" (recommended) or "Dynamic"
+frontend_private_ip_allocation = "Static"
+
+# Static private IP address (required if allocation is "Static")
+# Must be within the subnet's address range
+frontend_private_ip_address = "10.20.3.10"
+
+# ----------------------------------------------------------------------------
+# FRONTEND IP CONFIGURATION (Public LB)
+# ----------------------------------------------------------------------------
+# Uncomment these if using type = "public"
+
+# Create a new public IP for the load balancer
+# create_public_ip = true
+
+# OR provide an existing public IP resource ID
+# public_ip_id = "/subscriptions/xxx/resourceGroups/xxx/providers/Microsoft.Network/publicIPAddresses/my-pip"
+
+# Public IP SKU (must be "Standard" for ALZ compliance)
+# public_ip_sku = "Standard"
+
+# Public IP allocation method (must be "Static" for Standard SKU)
+# public_ip_allocation_method = "Static"
+
+# Public IP SKU tier
+# Options: "Regional" (most common) or "Global"
+# public_ip_sku_tier = "Regional"
+
+# Availability zones for the public IP
+# Examples: ["1", "2", "3"] for zone redundancy, or null for no zones
+# public_ip_zones = ["1", "2", "3"]
+
+# ----------------------------------------------------------------------------
+# BACKEND POOL
+# ----------------------------------------------------------------------------
+
+# Name for the backend address pool
+# VMs/NICs will be added to this pool
+backend_pool_name = "backend-pool"
+
+# ----------------------------------------------------------------------------
+# HEALTH PROBES
+# ----------------------------------------------------------------------------
+# Define health probes to monitor backend resource health
+# You can define multiple probes for different ports/protocols
+
+# Example: Single TCP probe
+# probes = [
+#   {
+#     name                = "tcp-443"
+#     protocol            = "Tcp"        # Options: "Tcp", "Http", "Https"
+#     port                = 443
+#     interval            = 5            # Probe interval in seconds (default: 5)
+#     unhealthy_threshold = 2            # Failed probes before marking unhealthy (default: 2)
+#   }
+# ]
+
+# Example: HTTP probe with custom path
+# probes = [
+#   {
+#     name                = "http-80"
+#     protocol            = "Http"
+#     port                = 80
+#     request_path        = "/health"    # Required for Http/Https probes
+#     interval            = 10
+#     unhealthy_threshold = 3
+#   }
+# ]
+
+# Example: Multiple probes
+# probes = [
+#   {
+#     name                = "tcp-443"
+#     protocol            = "Tcp"
+#     port                = 443
+#     interval            = 5
+#     unhealthy_threshold = 2
+#   },
+#   {
+#     name                = "tcp-80"
+#     protocol            = "Tcp"
+#     port                = 80
+#     interval            = 5
+#     unhealthy_threshold = 2
+#   }
+# ]
+
+# ----------------------------------------------------------------------------
+# LOAD BALANCING RULES
+# ----------------------------------------------------------------------------
+# Define rules to distribute traffic from frontend to backend
+
+# Example: Single HTTPS rule
+# lb_rules = [
+#   {
+#     name                  = "https-443"
+#     protocol              = "Tcp"              # Options: "Tcp", "Udp", "All"
+#     frontend_port         = 443
+#     backend_port          = 443
+#     probe_name            = "tcp-443"          # Must match a probe name above
+#     idle_timeout_in_minutes = 4                # Default: 4, Range: 4-30
+#     enable_floating_ip    = false              # Enable for SQL AlwaysOn scenarios
+#     disable_outbound_snat = true               # Disable if using NAT Gateway
+#   }
+# ]
+
+# Example: Multiple rules
+# lb_rules = [
+#   {
+#     name                  = "https-443"
+#     protocol              = "Tcp"
+#     frontend_port         = 443
+#     backend_port          = 443
+#     probe_name            = "tcp-443"
+#     disable_outbound_snat = true
+#   },
+#   {
+#     name                  = "http-80"
+#     protocol              = "Tcp"
+#     frontend_port         = 80
+#     backend_port          = 8080            # Different backend port
+#     probe_name            = "tcp-80"
+#     disable_outbound_snat = true
+#   }
+# ]
+
+# Example: SQL AlwaysOn with floating IP
+# lb_rules = [
+#   {
+#     name                  = "sql-1433"
+#     protocol              = "Tcp"
+#     frontend_port         = 1433
+#     backend_port          = 1433
+#     probe_name            = "tcp-1433"
+#     enable_floating_ip    = true            # Required for SQL AlwaysOn
+#     disable_outbound_snat = false
+#   }
+# ]
+
+# ----------------------------------------------------------------------------
+# OUTBOUND CONNECTIVITY (SNAT)
+# ----------------------------------------------------------------------------
+
+# Enable outbound rule for SNAT
+# Set to false if using NAT Gateway or Azure Firewall for outbound (recommended)
+# enable_outbound_rule = false
+
+# Protocol for outbound rule (if enabled)
+# Options: "Tcp", "Udp", "All"
+# outbound_protocol = "Tcp"
+
+# Number of SNAT ports allocated per backend instance
+# Range: 0-64000, Default: 1024
+# allocated_outbound_ports = 1024
+
+# ----------------------------------------------------------------------------
+# DIAGNOSTICS & MONITORING
+# ----------------------------------------------------------------------------
+
+# Enable diagnostic settings (logs and metrics to Log Analytics)
+# Set to false if you don't need centralized logging
+# enable_diagnostics = false
+
+# Log Analytics Workspace resource ID (required if diagnostics enabled)
+# Example format: "/subscriptions/xxx/resourceGroups/xxx/providers/Microsoft.OperationalInsights/workspaces/law-name"
+# log_analytics_workspace_id = "/subscriptions/xxx/resourceGroups/rg-platform/providers/Microsoft.OperationalInsights/workspaces/law-platform"
+
+# Diagnostic log categories to enable
+# Leave as null to enable all available categories (recommended)
+# Or specify specific categories: ["LoadBalancerHealthEvent"]
+# diagnostic_categories = null
+
+# ----------------------------------------------------------------------------
+# RESOURCE TAGS
+# ----------------------------------------------------------------------------
+
+# Tags to apply to all resources
+# These help with cost tracking, ownership, and resource management
+tags = {
+  owner      = "your-name"
+  env        = "prod"
+  costCenter = "IT-DEPT"
+  service    = "app-name"
+  managedBy  = "terraform"
+}
+
+# ============================================================================
+# REAL-WORLD EXAMPLE CONFIGURATIONS
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# EXAMPLE 1: Simple Internal Web Application Load Balancer
+# ----------------------------------------------------------------------------
+# Use case: Load balance HTTPS traffic across multiple web servers in a spoke
+#
+# rg_name                        = "rg-web-prod"
+# vnet_rg_name                   = "rg-network-prod"
+# vnet_name                      = "vnet-spoke-prod"
+# subnet_name                    = "snet-web"
+# location                       = "uksouth"
+# lb_name                        = "web-ilb-prod"
+# frontend_private_ip_allocation = "Static"
+# frontend_private_ip_address    = "10.20.3.10"
+# backend_pool_name              = "web-backend"
+#
+# probes = [
+#   {
+#     name                = "https-443"
+#     protocol            = "Https"
+#     port                = 443
+#     request_path        = "/health"
+#     interval            = 15
+#     unhealthy_threshold = 2
+#   }
+# ]
+#
+# lb_rules = [
+#   {
+#     name                  = "https-443"
+#     protocol              = "Tcp"
+#     frontend_port         = 443
+#     backend_port          = 443
+#     probe_name            = "https-443"
+#     disable_outbound_snat = true
+#   }
+# ]
+#
+# tags = {
+#   owner      = "web-team"
+#   env        = "prod"
+#   costCenter = "IT-WEB"
+#   service    = "website"
+# }
+
+# ----------------------------------------------------------------------------
+# EXAMPLE 2: Multi-Port Application (Web + API)
+# ----------------------------------------------------------------------------
+# Use case: Load balance both HTTP and HTTPS traffic to backend servers
+#
+# rg_name                        = "rg-app-prod"
+# vnet_rg_name                   = "rg-network-prod"
+# vnet_name                      = "vnet-spoke-app"
+# subnet_name                    = "snet-app"
+# location                       = "uksouth"
+# lb_name                        = "app-ilb-prod"
+# frontend_private_ip_allocation = "Static"
+# frontend_private_ip_address    = "10.30.5.20"
+# backend_pool_name              = "app-backend"
+#
+# probes = [
+#   {
+#     name                = "http-health"
+#     protocol            = "Http"
+#     port                = 80
+#     request_path        = "/api/health"
+#     interval            = 10
+#     unhealthy_threshold = 3
+#   },
+#   {
+#     name                = "https-health"
+#     protocol            = "Https"
+#     port                = 443
+#     request_path        = "/api/health"
+#     interval            = 10
+#     unhealthy_threshold = 3
+#   }
+# ]
+#
+# lb_rules = [
+#   {
+#     name                  = "http-80"
+#     protocol              = "Tcp"
+#     frontend_port         = 80
+#     backend_port          = 80
+#     probe_name            = "http-health"
+#     disable_outbound_snat = true
+#   },
+#   {
+#     name                  = "https-443"
+#     protocol              = "Tcp"
+#     frontend_port         = 443
+#     backend_port          = 443
+#     probe_name            = "https-health"
+#     disable_outbound_snat = true
+#   }
+# ]
+#
+# enable_diagnostics         = true
+# log_analytics_workspace_id = "/subscriptions/xxx/resourceGroups/rg-platform/providers/Microsoft.OperationalInsights/workspaces/law-platform"
+#
+# tags = {
+#   owner      = "app-team"
+#   env        = "prod"
+#   costCenter = "IT-DEV"
+#   service    = "api"
+# }
+
+# ----------------------------------------------------------------------------
+# EXAMPLE 3: SQL Server AlwaysOn Availability Group
+# ----------------------------------------------------------------------------
+# Use case: Load balancer for SQL AlwaysOn listener with floating IP
+#
+# rg_name                        = "rg-sql-prod"
+# vnet_rg_name                   = "rg-network-prod"
+# vnet_name                      = "vnet-spoke-data"
+# subnet_name                    = "snet-database"
+# location                       = "uksouth"
+# lb_name                        = "sql-ilb-prod"
+# frontend_private_ip_allocation = "Static"
+# frontend_private_ip_address    = "10.40.10.50"
+# backend_pool_name              = "sql-backend"
+#
+# probes = [
+#   {
+#     name                = "sql-probe"
+#     protocol            = "Tcp"
+#     port                = 59999              # Custom probe port
+#     interval            = 5
+#     unhealthy_threshold = 2
+#   }
+# ]
+#
+# lb_rules = [
+#   {
+#     name                  = "sql-1433"
+#     protocol              = "Tcp"
+#     frontend_port         = 1433
+#     backend_port          = 1433
+#     probe_name            = "sql-probe"
+#     enable_floating_ip    = true            # REQUIRED for SQL AlwaysOn
+#     disable_outbound_snat = false
+#     idle_timeout_in_minutes = 30            # Max timeout for long queries
+#   }
+# ]
+#
+# tags = {
+#   owner      = "dba-team"
+#   env        = "prod"
+#   costCenter = "IT-DATA"
+#   service    = "sql-alwayson"
+# }
+
+# ----------------------------------------------------------------------------
+# EXAMPLE 4: Custom Port Mapping (Different Frontend/Backend Ports)
+# ----------------------------------------------------------------------------
+# Use case: External port differs from application port
+#
+# rg_name                        = "rg-custom-prod"
+# vnet_rg_name                   = "rg-network-prod"
+# vnet_name                      = "vnet-spoke-services"
+# subnet_name                    = "snet-services"
+# location                       = "uksouth"
+# lb_name                        = "service-ilb-prod"
+# frontend_private_ip_allocation = "Static"
+# frontend_private_ip_address    = "10.50.8.100"
+# backend_pool_name              = "service-backend"
+#
+# probes = [
+#   {
+#     name                = "app-health"
+#     protocol            = "Http"
+#     port                = 8080
+#     request_path        = "/status"
+#     interval            = 15
+#     unhealthy_threshold = 2
+#   }
+# ]
+#
+# lb_rules = [
+#   {
+#     name                  = "web-to-app"
+#     protocol              = "Tcp"
+#     frontend_port         = 443              # Clients connect to 443
+#     backend_port          = 8080             # App listens on 8080
+#     probe_name            = "app-health"
+#     disable_outbound_snat = true
+#   }
+# ]
+#
+# tags = {
+#   owner      = "platform-team"
+#   env        = "prod"
+#   costCenter = "IT-PLAT"
+#   service    = "custom-app"
+# }
+
+# ----------------------------------------------------------------------------
+# EXAMPLE 5: Public-Facing Load Balancer with Zone Redundancy
+# ----------------------------------------------------------------------------
+# Use case: Internet-facing application with high availability
+#
+# rg_name                     = "rg-public-prod"
+# vnet_rg_name                = "rg-network-prod"
+# vnet_name                   = "vnet-dmz"
+# subnet_name                 = "snet-public"
+# location                    = "uksouth"
+# lb_name                     = "public-lb-prod"
+# type                        = "public"
+# create_public_ip            = true
+# public_ip_sku               = "Standard"
+# public_ip_allocation_method = "Static"
+# public_ip_sku_tier          = "Regional"
+# public_ip_zones             = ["1", "2", "3"]    # Zone redundancy
+# backend_pool_name           = "public-backend"
+#
+# probes = [
+#   {
+#     name                = "https-probe"
+#     protocol            = "Https"
+#     port                = 443
+#     request_path        = "/"
+#     interval            = 5
+#     unhealthy_threshold = 2
+#   }
+# ]
+#
+# lb_rules = [
+#   {
+#     name                    = "https-443"
+#     protocol                = "Tcp"
+#     frontend_port           = 443
+#     backend_port            = 443
+#     probe_name              = "https-probe"
+#     disable_outbound_snat   = false
+#     idle_timeout_in_minutes = 15
+#   }
+# ]
+#
+# enable_outbound_rule      = true
+# outbound_protocol         = "All"
+# allocated_outbound_ports  = 2048
+#
+# enable_diagnostics         = true
+# log_analytics_workspace_id = "/subscriptions/xxx/resourceGroups/rg-platform/providers/Microsoft.OperationalInsights/workspaces/law-platform"
+#
+# tags = {
+#   owner      = "infra-team"
+#   env        = "prod"
+#   costCenter = "IT-INFRA"
+#   service    = "public-web"
+# }
+
+# ----------------------------------------------------------------------------
+# EXAMPLE 6: UDP Load Balancer (VoIP/Gaming/DNS)
+# ----------------------------------------------------------------------------
+# Use case: Load balance UDP traffic (VoIP server, game server, DNS)
+#
+# rg_name                        = "rg-voip-prod"
+# vnet_rg_name                   = "rg-network-prod"
+# vnet_name                      = "vnet-spoke-comms"
+# subnet_name                    = "snet-voip"
+# location                       = "uksouth"
+# lb_name                        = "voip-ilb-prod"
+# frontend_private_ip_allocation = "Static"
+# frontend_private_ip_address    = "10.60.5.30"
+# backend_pool_name              = "voip-backend"
+#
+# probes = [
+#   {
+#     name                = "sip-probe"
+#     protocol            = "Tcp"              # Probes must be TCP even for UDP rules
+#     port                = 5060
+#     interval            = 5
+#     unhealthy_threshold = 2
+#   }
+# ]
+#
+# lb_rules = [
+#   {
+#     name                  = "sip-udp"
+#     protocol              = "Udp"            # UDP load balancing
+#     frontend_port         = 5060
+#     backend_port          = 5060
+#     probe_name            = "sip-probe"
+#     disable_outbound_snat = true
+#   }
+# ]
+#
+# tags = {
+#   owner      = "voip-team"
+#   env        = "prod"
+#   costCenter = "IT-COMMS"
+#   service    = "voip"
+# }
+
+# ============================================================================
+# USAGE NOTES
+# ============================================================================
+#
+# 1. INTERNAL LB (Most Common for ALZ):
+#    - Set type = "internal"
+#    - Provide subnet_id via existing subnet
+#    - Use static private IP allocation
+#    - Disable outbound_rule if using NAT Gateway
+#
+# 2. PUBLIC LB:
+#    - Set type = "public"
+#    - Set create_public_ip = true OR provide public_ip_id
+#    - Consider using outbound_rule for SNAT
+#
+# 3. BACKEND RESOURCES:
+#    - After deploying the LB, attach VMs/NICs to the backend pool
+#    - Can be done via Terraform or Azure Portal
+#    - VM NICs need to reference: module.internal_lb.backend_address_pool_id
+#
+# 4. HEALTH PROBES:
+#    - Always define probes matching your application ports
+#    - Use HTTP/HTTPS probes with health endpoints for better monitoring
+#    - Match probe protocol to your application (TCP for generic, HTTP for web apps)
+#
+# 5. ALZ COMPLIANCE:
+#    - Use Standard SKU only
+#    - Internal LBs are preferred for spoke workloads
+#    - Use NAT Gateway for outbound instead of LB outbound rules
+#    - Enable diagnostics for production workloads
+#
+# ============================================================================

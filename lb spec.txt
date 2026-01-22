@@ -1,0 +1,7 @@
+I require a terraform module
+In a new folder
+the module should enable the deployment of a loadbalancer
+the module should be used in an azure landing zones subscription
+the module must meet all the azure policy requirements of landing zones
+the module should be reuseable
+the module should have all the options required to use it by suppling values in a terraform tfvars file
