@@ -1,0 +1,9 @@
+Client Request (10.241.11.128:443)
+         ↓
+   Load Balancer Frontend
+         ↓
+  Health Probe Checks VMs
+         ↓
+   Backend Pool Routes to Healthy VM
+         ↓
+    VM1 or VM2 Responds
