@@ -1,0 +1,175 @@
+# ============================================================================
+# AZURE LANDING ZONE COMPLIANT LOAD BALANCER CONFIGURATION
+# ============================================================================
+# This configuration is pre-configured with Azure Landing Zone best practices
+# and policy compliance settings. Simply update the network details and deploy.
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# REQUIRED VARIABLES - UPDATE THESE FOR YOUR ENVIRONMENT
+# ----------------------------------------------------------------------------
+
+# Resource group where the load balancer will be deployed
+rg_name = "rg-lb-prod"
+
+# Resource group where the VNet exists (typically in the connectivity subscription)
+vnet_rg_name = "rg-network-prod"
+
+# Name of the existing virtual network in your spoke
+vnet_name = "vnet-spoke-prod"
+
+# Name of the existing subnet within the VNet
+subnet_name = "snet-app"
+
+# Azure region for the load balancer deployment
+location = "uksouth"
+
+# Name of the load balancer
+lb_name = "app-ilb-prod"
+
+# ----------------------------------------------------------------------------
+# ALZ-COMPLIANT CONFIGURATION (PRE-CONFIGURED)
+# ----------------------------------------------------------------------------
+
+# INTERNAL LOAD BALANCER (ALZ Best Practice for Spoke Workloads)
+# Type is not specified here - it defaults to "internal" in the module
+# Internal LBs keep traffic within your private network
+
+# STATIC PRIVATE IP (ALZ Best Practice)
+# Static allocation ensures consistent IP for DNS and application configuration
+frontend_private_ip_allocation = "Static"
+frontend_private_ip_address    = "10.20.3.10"  # UPDATE to match your subnet range
+
+# BACKEND POOL
+backend_pool_name = "backend-pool"
+
+# HEALTH PROBES (Configure based on your application)
+# Always use application-level health checks for production workloads
+probes = [
+  {
+    name                = "tcp-443"
+    protocol            = "Tcp"              # Use Tcp, Http, or Https
+    port                = 443
+    interval            = 5                  # Check every 5 seconds
+    unhealthy_threshold = 2                  # 2 failed probes = unhealthy
+  }
+]
+
+# LOAD BALANCING RULES
+lb_rules = [
+  {
+    name                  = "https-443"
+    protocol              = "Tcp"
+    frontend_port         = 443
+    backend_port          = 443
+    probe_name            = "tcp-443"
+    disable_outbound_snat = true             # ALZ: Use NAT Gateway for outbound, not LB
+    enable_floating_ip    = false            # Only enable for SQL AlwaysOn
+    idle_timeout_in_minutes = 4              # Default TCP timeout
+  }
+]
+
+# OUTBOUND CONNECTIVITY (ALZ Best Practice)
+# Do NOT use LB outbound rules - use NAT Gateway or Azure Firewall instead
+enable_outbound_rule = false
+
+# DIAGNOSTICS (ALZ Best Practice for Production)
+# Enable diagnostics to send logs to Log Analytics
+enable_diagnostics = false  # Set to true and provide workspace ID for production
+
+# Uncomment and provide your Log Analytics Workspace ID for production workloads
+# log_analytics_workspace_id = "/subscriptions/YOUR_SUB_ID/resourceGroups/rg-platform/providers/Microsoft.OperationalInsights/workspaces/law-platform"
+
+# Let module auto-discover all available diagnostic categories
+diagnostic_categories = null
+
+# RESOURCE TAGS (ALZ Governance)
+# Mandatory tags for cost tracking, ownership, and compliance
+tags = {
+  owner       = "your-name"              # REQUIRED: Resource owner
+  env         = "prod"                   # REQUIRED: Environment (dev/test/prod)
+  costCenter  = "IT-DEPT"                # REQUIRED: Cost allocation
+  service     = "app-name"               # REQUIRED: Service/application name
+  managedBy   = "terraform"              # How the resource is managed
+  compliance  = "alz"                    # Compliance framework
+  dataClass   = "internal"               # Data classification
+}
+
+# ============================================================================
+# ALZ COMPLIANCE CHECKLIST
+# ============================================================================
+#
+# ✅ Standard SKU Load Balancer (automatically enforced by module)
+# ✅ Internal Load Balancer (keeps traffic private)
+# ✅ Static Private IP allocation (predictable networking)
+# ✅ No outbound rules (use NAT Gateway instead)
+# ✅ Health probes configured (application monitoring)
+# ✅ Diagnostics ready (enable for production)
+# ✅ Resource tags applied (governance and cost tracking)
+# ✅ Deployed to spoke VNet (network segmentation)
+#
+# ============================================================================
+# DEPLOYMENT NOTES
+# ============================================================================
+#
+# 1. BEFORE DEPLOYMENT:
+#    - Update subnet IP address to match your subnet range
+#    - Verify the VNet and subnet exist
+#    - Update all tag values
+#    - For production: enable diagnostics and provide workspace ID
+#
+# 2. AFTER DEPLOYMENT:
+#    - Add VMs/NICs to the backend pool
+#    - Verify health probes are passing
+#    - Test connectivity through the LB IP
+#    - Configure DNS if needed
+#
+# 3. OUTBOUND CONNECTIVITY:
+#    - Ensure NAT Gateway is attached to your subnet, OR
+#    - Route table directs traffic to Azure Firewall
+#    - Do NOT use LB outbound rules in ALZ environments
+#
+# 4. NETWORK SECURITY:
+#    - NSG rules on subnet control inbound traffic
+#    - Application-level TLS termination on backend VMs
+#    - No public IPs on backend VMs
+#
+# 5. MONITORING:
+#    - Enable diagnostics for production (uncomment workspace ID)
+#    - Monitor health probe status in Azure Portal
+#    - Set up alerts for backend pool health
+#    - Review LB metrics regularly
+#
+# ============================================================================
+# COMMON CUSTOMIZATIONS
+# ============================================================================
+#
+# MULTIPLE PORTS (Web Application):
+# probes = [
+#   { name = "http-80", protocol = "Tcp", port = 80 },
+#   { name = "https-443", protocol = "Tcp", port = 443 }
+# ]
+# lb_rules = [
+#   { name = "http-80", protocol = "Tcp", frontend_port = 80, backend_port = 80, probe_name = "http-80", disable_outbound_snat = true },
+#   { name = "https-443", protocol = "Tcp", frontend_port = 443, backend_port = 443, probe_name = "https-443", disable_outbound_snat = true }
+# ]
+#
+# HTTP HEALTH CHECK (Web Application):
+# probes = [
+#   { name = "http-health", protocol = "Http", port = 80, request_path = "/health" }
+# ]
+#
+# SQL ALWAYSON (Database):
+# lb_rules = [
+#   { 
+#     name = "sql-1433", 
+#     protocol = "Tcp", 
+#     frontend_port = 1433, 
+#     backend_port = 1433, 
+#     probe_name = "sql-probe",
+#     enable_floating_ip = true,        # REQUIRED for SQL
+#     idle_timeout_in_minutes = 30      # Longer for database connections
+#   }
+# ]
+#
+# ============================================================================
