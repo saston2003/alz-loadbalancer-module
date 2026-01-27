@@ -76,6 +76,7 @@ resource "azurerm_lb_rule" "this" {
   idle_timeout_in_minutes        = try(each.value.idle_timeout_in_minutes, 4)
   enable_floating_ip             = try(each.value.enable_floating_ip, false)
   disable_outbound_snat          = try(each.value.disable_outbound_snat, false)
+  load_distribution              = try(each.value.load_distribution, "Default")
 }
 
 # Optional outbound rule (avoid when using NAT Gateway)

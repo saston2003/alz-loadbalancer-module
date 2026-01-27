@@ -18,4 +18,4 @@ VM first or vm second scenario  - mine currently is second ie. 2vm's already cre
 
 There is a way of getting the vm password passed in as variable
 
-Azure Verified?
+Azure Verified?  IIS did not seem to install - it did actually!
